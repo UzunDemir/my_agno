@@ -6,6 +6,7 @@ from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.vectordb.pgvector import PgVector
 
+# Кешируем загрузку агента
 @st.cache_resource
 def load_agent():
     embedder = HuggingfaceCustomEmbedder()
@@ -34,12 +35,12 @@ def load_agent():
     agent.knowledge.load(recreate=False)
     return agent
 
-# UI
-st.title("🤖 Agno Agent")
-question = st.text_input("Введите ваш вопрос:")
+agent = load_agent()
 
+# UI
+st.title("🧠 Agno Assistant")
+question = st.text_input("Введите вопрос:", placeholder="Например: What are Agents?")
 if question:
     with st.spinner("Генерируем ответ..."):
-        agent = load_agent()
-        response = agent.chat(question)
-        st.markdown(response)
+        output = agent.chat(question)
+        st.markdown(output, unsafe_allow_html=True)
