@@ -1,4 +1,7 @@
 streamlit
 psycopg[binary]
-agno
 huggingface_hub
+transformers
+torch
+openai
+agno
