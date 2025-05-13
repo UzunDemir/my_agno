@@ -6,3 +6,4 @@ torch
 openai
 agno
 sqlalchemy
+pgvector
