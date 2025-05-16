@@ -1,14 +1,10 @@
-import io
-import sys
 import streamlit as st
 from agno.agent import Agent
 from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-st.set_page_config(page_title="Финансовый Анализ", layout="wide")
-st.title("📈 Инвестиционные рекомендации")
-
+# Настройка агента
 agent = Agent(
     model=DeepSeek(id="deepseek-chat"),
     tools=[
@@ -28,34 +24,12 @@ agent = Agent(
     markdown=True,
 )
 
-query = st.text_area(
-    "Введите ваш вопрос:",
-    value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?",
-    height=150,
-)
+# Интерфейс Streamlit
+st.title("📈 Финансовый AI-Аналитик")
 
-if st.button("🔍 Получить ответ"):
-    placeholder = st.empty()
-    with st.spinner("Анализируем данные..."):
+query = st.text_input("Введите вопрос:", "самый высокий рос в ближайшие 3 месяца")
 
-        # Перехватываем stdout
-        buffer = io.StringIO()
-        sys_stdout = sys.stdout
-        sys.stdout = buffer
-
-        try:
-            # Вызываем print_response с stream=True — вывод попадет в buffer
-            agent.print_response(
-                query,
-                stream=False,
-                show_full_reasoning=False,
-                stream_intermediate_steps=False,
-            )
-        finally:
-            sys.stdout = sys_stdout
-
-        # Получаем весь вывод
-        full_output = buffer.getvalue()
-
-        # Выводим в Streamlit
-        placeholder.markdown(full_output, unsafe_allow_html=True)
+if st.button("🔍 Получить отчет"):
+    with st.spinner("Генерация отчета..."):
+        response = agent.run(query)
+        st.markdown(response)  # сохраняет таблицы и форматирование
