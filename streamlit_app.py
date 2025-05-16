@@ -24,7 +24,7 @@ agent = Agent(
     markdown=True,
 )
 
-# Streamlit UI
+# Интерфейс Streamlit
 st.set_page_config(page_title="Финансовый AI-Аналитик", layout="wide")
 st.title("🧠 Финансовый AI-Аналитик — Пошаговый вывод")
 
@@ -32,14 +32,15 @@ query = st.text_input("Введите вопрос:", "самый высокий
 
 if st.button("🚀 Запустить анализ"):
     with st.spinner("⏳ Анализируем..."):
-        result = agent.get_full_response(query)
+        # Этот вызов возвращает словарь: {"final_response": ..., "intermediate_steps": [...]}
+        result = agent.run(query, stream=False, return_steps=True)
 
         st.subheader("🧩 Пошаговое рассуждение:")
-        for i, step in enumerate(result["intermediate_steps"]):
+        for i, step in enumerate(result.get("intermediate_steps", [])):
             st.markdown(f"### Шаг {i+1}:")
-            st.markdown(f"**Вопрос к инструменту:** {step['tool_input']}")
             st.markdown(f"**Инструмент:** `{step['tool_name']}`")
-            st.markdown("**Ответ инструмента:**")
+            st.markdown(f"**Ввод:** {step['tool_input']}")
+            st.markdown("**Вывод:**")
             st.markdown(step["tool_output"], unsafe_allow_html=True)
             st.markdown("---")
 
