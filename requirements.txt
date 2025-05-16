@@ -1,3 +1,5 @@
 streamlit
-agno
+python-agno
+deepseek-ai
 yfinance
+tiktoken  # DeepSeek might use this
