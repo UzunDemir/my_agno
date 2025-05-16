@@ -4,7 +4,11 @@ from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-# --- Настройка агента ---
+# Настройка страницы Streamlit
+st.set_page_config(page_title="Анализ акций", layout="wide")
+st.title("Анализ перспективных компаний")
+
+# Инициализация агента
 @st.cache_resource
 def get_agent():
     return Agent(
@@ -28,23 +32,41 @@ def get_agent():
 
 agent = get_agent()
 
-# --- Интерфейс Streamlit ---
-st.set_page_config(page_title="Финансовый агент", layout="wide")
-st.title("📈 Финансовый AI-агент на базе Agno")
+# Пользовательский ввод
+user_query = st.text_area(
+    "Введите ваш запрос о перспективных компаниях:",
+    value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?",
+    height=100
+)
 
-user_input = st.text_area("Введите вопрос о компаниях, инвестициях, акциях и т.д.", height=150)
-
-if st.button("Анализировать"):
-    if user_input.strip() == "":
-        st.warning("Пожалуйста, введите запрос.")
-    else:
-        with st.spinner("Агент анализирует данные..."):
-            # Вывод ответа с промежуточными шагами
-            response = agent.run(
-                    user_input,
-                    stream=False,
-                    show_full_reasoning=True,
-                    stream_intermediate_steps=True,
-                )
-            st.markdown(response)
-
+if st.button("Получить анализ"):
+    # Создание контейнеров для вывода
+    response_container = st.container()
+    reasoning_container = st.expander("Подробный процесс анализа")
+    
+    # Обработка запроса
+    with reasoning_container:
+        st.write("Процесс анализа:")
+        reasoning_placeholder = st.empty()
+        
+        def stream_callback(chunk):
+            if 'intermediate_step' in chunk:
+                reasoning_placeholder.markdown(f"**Шаг:** {chunk['intermediate_step']}")
+            if 'reasoning' in chunk:
+                reasoning_placeholder.markdown(chunk['reasoning'])
+    
+    with response_container:
+        st.write("Результат анализа:")
+        response_placeholder = st.empty()
+        
+        full_response = ""
+        for chunk in agent.stream_response(
+            user_query,
+            stream=True,
+            show_full_reasoning=True,
+            stream_intermediate_steps=True,
+            callback=stream_callback
+        ):
+            if 'response' in chunk:
+                full_response += chunk['response']
+                response_placeholder.markdown(full_response)
