@@ -1,17 +1,13 @@
-# 1. АБСОЛЮТНО ПЕРВАЯ КОМАНДА В ФАЙЛЕ - ДО ЛЮБЫХ ИМПОРТОВ!
 import streamlit as st
-st.set_page_config(page_title="Анализ акций", layout="wide")
-
-# 2. Основные импорты (после set_page_config)
 from agno.agent import Agent
 from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-# 3. Инициализация агента (с кэшированием)
+# Initialize the agent outside the main function to avoid re-initialization on every rerun
 @st.cache_resource
-def init_agent():
-    return Agent(
+def create_agent():
+    agent = Agent(
         model=DeepSeek(id="deepseek-chat"),
         tools=[
             ReasoningTools(add_instructions=True),
@@ -29,40 +25,22 @@ def init_agent():
         ],
         markdown=True,
     )
+    return agent
 
-# 4. Основной интерфейс
-def main():
-    st.title("📈 Анализ перспективных компаний")
-    
-    with st.form("query_form"):
-        query = st.text_area(
-            "Введите запрос:",
-            value="Выведи перспективные компании, объясни почему. Какие прогнозы? Что покупать/продавать?",
-            height=100
-        )
-        submitted = st.form_submit_button("Анализировать")
-    
-    if submitted:
-        agent = init_agent()
-        
-        with st.spinner("Анализируем данные..."):
-            with st.expander("Детали анализа", expanded=False):
-                reasoning = st.empty()
-            
-            result = st.empty()
-            
+agent = create_agent()
+
+st.title("Финансовый Аналитик")
+
+user_query = st.text_input("Введите ваш запрос:", "Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?")
+
+if st.button("Анализировать"):
+    if user_query:
+        with st.spinner("Анализирую..."):
+            response_placeholder = st.empty()
             full_response = ""
-            for chunk in agent.stream_response(
-                query,
-                stream=True,
-                show_full_reasoning=True,
-                stream_intermediate_steps=True
-            ):
-                if 'reasoning' in chunk:
-                    reasoning.markdown(chunk['reasoning'])
-                if 'response' in chunk:
-                    full_response += chunk['response']
-                    result.markdown(full_response)
 
-if __name__ == "__main__":
-    main()
+            for chunk in agent.stream(user_query, show_full_reasoning=False, stream_intermediate_steps=False):
+                full_response += chunk
+                response_placeholder.markdown(full_response)
+    else:
+        st.warning("Пожалуйста, введите ваш запрос.")
