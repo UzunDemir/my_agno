@@ -8,7 +8,6 @@ from agno.tools.yfinance import YFinanceTools
 st.title("Stock Market Prediction Agent")
 st.write("This agent analyzes stock market trends and predicts what might grow in the next 3 months.")
 
-# Initialize the agent (we'll cache this to avoid reinitialization)
 @st.cache_resource
 def get_agent():
     return Agent(
@@ -34,24 +33,21 @@ agent = get_agent()
 
 # User input
 user_query = st.text_input(
-    "Ask about stock predictions (e.g., 'What will grow in the next 3 months?'):",
-    "Что будет расти через 3 месяца"
+    "Ask about stock predictions:",
+    "What stocks are likely to grow in the next 3 months?"
 )
 
 if st.button("Get Prediction"):
-    # Create a placeholder for the streaming response
-    response_placeholder = st.empty()
-    full_response = ""
-
-    # Stream the response
-    for chunk in agent.stream_response(
-        user_query,
-        stream=True,
-        show_full_reasoning=True,
-        stream_intermediate_steps=True
-    ):
-        full_response += chunk
-        response_placeholder.markdown(full_response)
-
-    # Display the final response
-    response_placeholder.markdown(full_response)
+    try:
+        # Create a placeholder for the response
+        response_placeholder = st.empty()
+        
+        # Get the response (using regular response instead of stream_response)
+        response = agent.run(user_query)
+        
+        # Display the response
+        response_placeholder.markdown(response)
+        
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.info("Please try again or check the logs for more details.")
