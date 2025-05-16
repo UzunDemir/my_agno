@@ -1,15 +1,14 @@
+import io
+import sys
 import streamlit as st
 from agno.agent import Agent
 from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-# Настройки Streamlit
 st.set_page_config(page_title="Финансовый Анализ", layout="wide")
 st.title("📈 Инвестиционные рекомендации")
-st.markdown("Анализ перспективных компаний с помощью DeepSeek и YFinance.")
 
-# Создание агента
 agent = Agent(
     model=DeepSeek(id="deepseek-chat"),
     tools=[
@@ -29,31 +28,34 @@ agent = Agent(
     markdown=True,
 )
 
-# Ввод вопроса от пользователя
 query = st.text_area(
     "Введите ваш вопрос:",
     value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?",
-    height=150
+    height=150,
 )
 
 if st.button("🔍 Получить ответ"):
     placeholder = st.empty()
     with st.spinner("Анализируем данные..."):
-        output = ""
+
+        # Перехватываем stdout
+        buffer = io.StringIO()
+        sys_stdout = sys.stdout
+        sys.stdout = buffer
+
         try:
-            for chunk in agent.stream_response(
+            # Вызываем print_response с stream=True — вывод попадет в buffer
+            agent.print_response(
                 query,
+                stream=True,
                 show_full_reasoning=True,
-                stream_intermediate_steps=True
-            ):
-                # Обработка потока: chunk может быть строкой или словарем
-                if isinstance(chunk, dict):
-                    content = chunk.get("content", "")
-                else:
-                    content = str(chunk)
+                stream_intermediate_steps=True,
+            )
+        finally:
+            sys.stdout = sys_stdout
 
-                output += content
-                placeholder.markdown(output, unsafe_allow_html=True)
+        # Получаем весь вывод
+        full_output = buffer.getvalue()
 
-        except Exception as e:
-            st.error(f"Произошла ошибка: {e}")
+        # Выводим в Streamlit
+        placeholder.markdown(full_output, unsafe_allow_html=True)
