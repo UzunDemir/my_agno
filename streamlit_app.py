@@ -1,22 +1,16 @@
-# Этот код должен быть в файле streamlit_app.py
+# 1. АБСОЛЮТНО ПЕРВАЯ КОМАНДА В ФАЙЛЕ - ДО ЛЮБЫХ ИМПОРТОВ!
 import streamlit as st
-
-# АБСОЛЮТНО ПЕРВАЯ КОМАНДА в файле
 st.set_page_config(page_title="Анализ акций", layout="wide")
 
-# Теперь можно делать остальные импорты
-def load_dependencies():
-    from agno.agent import Agent
-    from agno.models.deepseek import DeepSeek
-    from agno.tools.reasoning import ReasoningTools
-    from agno.tools.yfinance import YFinanceTools
-    return Agent, DeepSeek, ReasoningTools, YFinanceTools
+# 2. Основные импорты (после set_page_config)
+from agno.agent import Agent
+from agno.models.deepseek import DeepSeek
+from agno.tools.reasoning import ReasoningTools
+from agno.tools.yfinance import YFinanceTools
 
-Agent, DeepSeek, ReasoningTools, YFinanceTools = load_dependencies()
-
-# Инициализация агента
+# 3. Инициализация агента (с кэшированием)
 @st.cache_resource
-def get_agent():
+def init_agent():
     return Agent(
         model=DeepSeek(id="deepseek-chat"),
         tools=[
@@ -36,48 +30,39 @@ def get_agent():
         markdown=True,
     )
 
-# Основной интерфейс приложения
+# 4. Основной интерфейс
 def main():
-    st.title("Анализ перспективных компаний")
+    st.title("📈 Анализ перспективных компаний")
     
-    user_query = st.text_area(
-        "Введите ваш запрос о перспективных компаниях:",
-        value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?",
-        height=100
-    )
-
-    if st.button("Получить анализ"):
-        agent = get_agent()
+    with st.form("query_form"):
+        query = st.text_area(
+            "Введите запрос:",
+            value="Выведи перспективные компании, объясни почему. Какие прогнозы? Что покупать/продавать?",
+            height=100
+        )
+        submitted = st.form_submit_button("Анализировать")
+    
+    if submitted:
+        agent = init_agent()
         
-        response_container = st.container()
-        reasoning_container = st.expander("Подробный процесс анализа")
-        
-        with reasoning_container:
-            st.write("Процесс анализа:")
-            reasoning_placeholder = st.empty()
+        with st.spinner("Анализируем данные..."):
+            with st.expander("Детали анализа", expanded=False):
+                reasoning = st.empty()
             
-            def stream_callback(chunk):
-                if 'intermediate_step' in chunk:
-                    reasoning_placeholder.markdown(f"**Шаг:** {chunk['intermediate_step']}")
-                if 'reasoning' in chunk:
-                    reasoning_placeholder.markdown(chunk['reasoning'])
-        
-        with response_container:
-            st.write("Результат анализа:")
-            response_placeholder = st.empty()
+            result = st.empty()
             
             full_response = ""
             for chunk in agent.stream_response(
-                user_query,
+                query,
                 stream=True,
                 show_full_reasoning=True,
-                stream_intermediate_steps=True,
-                callback=stream_callback
+                stream_intermediate_steps=True
             ):
+                if 'reasoning' in chunk:
+                    reasoning.markdown(chunk['reasoning'])
                 if 'response' in chunk:
                     full_response += chunk['response']
-                    response_placeholder.markdown(full_response)
+                    result.markdown(full_response)
 
-# Запуск приложения
 if __name__ == "__main__":
     main()
