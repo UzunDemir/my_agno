@@ -4,7 +4,12 @@ from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-# Создаем агента
+# Настройки Streamlit
+st.set_page_config(page_title="Финансовый Анализ", layout="wide")
+st.title("📈 Инвестиционные рекомендации")
+st.markdown("Анализ перспективных компаний с помощью DeepSeek и YFinance.")
+
+# Создание агента
 agent = Agent(
     model=DeepSeek(id="deepseek-chat"),
     tools=[
@@ -24,20 +29,31 @@ agent = Agent(
     markdown=True,
 )
 
-st.set_page_config(page_title="Финансовый Анализ", layout="wide")
-
-st.title("📈 Инвестиционные рекомендации")
-st.markdown("Анализ перспективных компаний с помощью DeepSeek и YFinance.")
-
-# Ввод от пользователя
-query = st.text_area("Введите ваш вопрос", value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?")
+# Ввод вопроса от пользователя
+query = st.text_area(
+    "Введите ваш вопрос:",
+    value="Выведи перспективные компании, объясни, почему. Какие прогнозы. Что покупать, продавать?",
+    height=150
+)
 
 if st.button("🔍 Получить ответ"):
     placeholder = st.empty()
-
-    # Используем stream_response
     with st.spinner("Анализируем данные..."):
         output = ""
-        for chunk in agent.stream_response(query, show_full_reasoning=True, stream_intermediate_steps=True):
-            output += chunk
-            placeholder.markdown(output, unsafe_allow_html=True)
+        try:
+            for chunk in agent.stream_response(
+                query,
+                show_full_reasoning=True,
+                stream_intermediate_steps=True
+            ):
+                # Обработка потока: chunk может быть строкой или словарем
+                if isinstance(chunk, dict):
+                    content = chunk.get("content", "")
+                else:
+                    content = str(chunk)
+
+                output += content
+                placeholder.markdown(output, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Произошла ошибка: {e}")
