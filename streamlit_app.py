@@ -24,25 +24,24 @@ agent = Agent(
     markdown=True,
 )
 
-# Интерфейс Streamlit
-st.set_page_config(page_title="Финансовый AI-Аналитик", layout="wide")
-st.title("🧠 Финансовый AI-Аналитик — Пошаговый вывод")
-
+# Интерфейс
+st.set_page_config(page_title="📊 Финансовый AI-Аналитик", layout="wide")
+st.title("🧠 Финансовый AI-Аналитик")
 query = st.text_input("Введите вопрос:", "самый высокий рос в ближайшие 3 месяца")
 
-if st.button("🚀 Запустить анализ"):
+if st.button("🔍 Проанализировать"):
     with st.spinner("⏳ Анализируем..."):
-        # Этот вызов возвращает словарь: {"final_response": ..., "intermediate_steps": [...]}
+        # Получаем все шаги reasoning
         result = agent.run(query, stream=False, return_steps=True)
 
-        st.subheader("🧩 Пошаговое рассуждение:")
+        # Шаги рассуждений
+        st.subheader("🧠 Пошаговое рассуждение")
         for i, step in enumerate(result.get("intermediate_steps", [])):
-            st.markdown(f"### Шаг {i+1}:")
-            st.markdown(f"**Инструмент:** `{step['tool_name']}`")
-            st.markdown(f"**Ввод:** {step['tool_input']}")
-            st.markdown("**Вывод:**")
-            st.markdown(step["tool_output"], unsafe_allow_html=True)
-            st.markdown("---")
+            with st.expander(f"Шаг {i+1}: {step['tool_name']}"):
+                st.markdown(f"**Ввод:** `{step['tool_input']}`")
+                st.markdown("**Вывод:**")
+                st.markdown(step["tool_output"], unsafe_allow_html=True)
 
-        st.subheader("📊 Финальный отчет:")
+        # Финальный ответ
+        st.subheader("📊 Финальный отчет")
         st.markdown(result["final_response"], unsafe_allow_html=True)
