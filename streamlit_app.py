@@ -47,9 +47,9 @@ if st.button("🔍 Получить ответ"):
             # Вызываем print_response с stream=True — вывод попадет в buffer
             agent.print_response(
                 query,
-                stream=True,
-                show_full_reasoning=True,
-                stream_intermediate_steps=True,
+                stream=False,
+                show_full_reasoning=False,
+                stream_intermediate_steps=False,
             )
         finally:
             sys.stdout = sys_stdout
