@@ -1,11 +1,14 @@
 import streamlit as st
+
+# Должно быть ПЕРВОЙ командой в приложении
+st.set_page_config(page_title="Анализ акций", layout="wide")
+
 from agno.agent import Agent
 from agno.models.deepseek import DeepSeek
 from agno.tools.reasoning import ReasoningTools
 from agno.tools.yfinance import YFinanceTools
 
-# Настройка страницы Streamlit
-st.set_page_config(page_title="Анализ акций", layout="wide")
+# Остальной код остается без изменений
 st.title("Анализ перспективных компаний")
 
 # Инициализация агента
