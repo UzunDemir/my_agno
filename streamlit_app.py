@@ -40,10 +40,11 @@ if st.button("Анализировать"):
     else:
         with st.spinner("Агент анализирует данные..."):
             # Вывод ответа с промежуточными шагами
-            response = agent.get_response(
-                user_input,
-                stream=False,
-                show_full_reasoning=True,
-                stream_intermediate_steps=True,
-            )
-        st.markdown(response)
+            response = agent.run(
+                    user_input,
+                    stream=False,
+                    show_full_reasoning=True,
+                    stream_intermediate_steps=True,
+                )
+            st.markdown(response)
+
